@@ -28,7 +28,7 @@ def replace_audio():
     messagebox.showinfo("Replacement Complete", "Audio replaced successfully!")
 
 app = tk.Tk()
-app.title("Audio Swapper")
+app.title("Audio Zwapper")
 
 label = tk.Label(app, text="Select videos to replace foreign audio with your language")
 label.pack(pady=10)
@@ -39,5 +39,5 @@ extract_button.pack(pady=5)
 replace_button = tk.Button(app, text="Replace Audio", command=replace_audio)
 replace_button.pack(pady=5)
 
-app.geometry("300x150")
+app.geometry("400x150")
 app.mainloop()
