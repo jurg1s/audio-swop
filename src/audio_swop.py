@@ -1,43 +1,73 @@
 import os
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, ttk
 
-def extract_audio():
-    video_path = filedialog.askopenfilename(title="Select Video with Your Language")
-    if not video_path:
-        return
+def select_video_with_audio():
+    global video_with_audio_path
+    video_with_audio_path = filedialog.askopenfilename(title="Select Video with Desired Audio")
+    if video_with_audio_path:
+        label_video_with_audio.config(text=f"Selected: {video_with_audio_path}")
 
-    audio_output_path = "audio_in_your_language.mp3"
-    os.system(f"ffmpeg -i '{video_path}' -q:a 0 -map a '{audio_output_path}'")
+def select_video_other():
+    global video_other_path
+    video_other_path = filedialog.askopenfilename(title="Select Video to Replace Audio")
+    if video_other_path:
+        label_video_other.config(text=f"Selected: {video_other_path}")
 
-    messagebox.showinfo("Extraction Complete", "Audio extracted successfully!")
+def select_output_directory():
+    global output_directory
+    output_directory = filedialog.askdirectory(title="Select Directory to Save Output Video")
+    if output_directory:
+        label_output_directory.config(text=f"Selected: {output_directory}")
 
-def replace_audio():
-    video_foreign_path = filedialog.askopenfilename(title="Select Foreign Language Video")
-    if not video_foreign_path:
-        return
+def start_process():
+    try:
+        if not video_with_audio_path or not video_other_path or not output_directory:
+            messagebox.showerror("Error", "Please select all required files and directory.")
+            return
 
-    audio_input_path = "audio_in_your_language.mp3"
-    output_video_path = "output_video.mp4"
-    if not os.path.exists(audio_input_path):
-        messagebox.showerror("Error", "Extracted audio file not found. Please extract audio first.")
-        return
+        output_video_path = os.path.join(output_directory, "output_video.mp4")
 
-    os.system(f"ffmpeg -i '{video_foreign_path}' -i '{audio_input_path}' -c:v copy -map 0:v:0 -map 1:a:0 -shortest '{output_video_path}'")
+        spinner.start()
 
-    messagebox.showinfo("Replacement Complete", "Audio replaced successfully!")
+        def run_ffmpeg_commands():
+            os.system(f"ffmpeg -i '{video_other_path}' -i '{video_with_audio_path}' -c:v copy -map 0:v:0 -map 1:a:0 -shortest '{output_video_path}'")
+            spinner.stop()
+            messagebox.showinfo("Process Complete", "Audio replaced successfully!")
+
+        app.after(100, run_ffmpeg_commands)
+    except NameError as e:
+        messagebox.showerror("Error", f"Variable not defined: {e}")
 
 app = tk.Tk()
 app.title("Audio Swop")
 
-label = tk.Label(app, text="Select videos to replace foreign audio with your language")
-label.pack(pady=10)
+label_instruction = tk.Label(app, text="Select the video file with desired audio, the video to replace audio, and the directory to save the output.")
+label_instruction.pack(pady=10)
 
-extract_button = tk.Button(app, text="Extract Audio", command=extract_audio)
-extract_button.pack(pady=5)
+button_video_with_audio = tk.Button(app, text="Select Video with Desired Audio", command=select_video_with_audio)
+button_video_with_audio.pack(pady=5)
 
-replace_button = tk.Button(app, text="Replace Audio", command=replace_audio)
-replace_button.pack(pady=5)
+label_video_with_audio = tk.Label(app, text="No file selected")
+label_video_with_audio.pack(pady=5)
 
-app.geometry("400x150")
+button_video_other = tk.Button(app, text="Select Video to Replace Audio", command=select_video_other)
+button_video_other.pack(pady=5)
+
+label_video_other = tk.Label(app, text="No file selected")
+label_video_other.pack(pady=5)
+
+button_output_directory = tk.Button(app, text="Select Directory to Save Output Video", command=select_output_directory)
+button_output_directory.pack(pady=5)
+
+label_output_directory = tk.Label(app, text="No directory selected")
+label_output_directory.pack(pady=5)
+
+start_button = tk.Button(app, text="Start Process", command=start_process, bg="green", fg="white")
+start_button.pack(pady=5)
+
+spinner = ttk.Progressbar(app, mode='indeterminate')
+spinner.pack(pady=5)
+
+app.geometry("500x400")
 app.mainloop()
