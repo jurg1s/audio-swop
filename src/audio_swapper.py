@@ -28,7 +28,7 @@ def replace_audio():
     messagebox.showinfo("Replacement Complete", "Audio replaced successfully!")
 
 app = tk.Tk()
-app.title("Audio Zwapper")
+app.title("Audio Swop")
 
 label = tk.Label(app, text="Select videos to replace foreign audio with your language")
 label.pack(pady=10)
