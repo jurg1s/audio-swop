@@ -61,10 +61,10 @@ class AudioSwopApp(QWidget):
         self.label_output_directory = QLabel("<span style='color:red;'>*</span> No directory selected")   
         layout.addWidget(self.label_output_directory)
 
-  
         # Spinner setup
         self.spinner_label = QLabel(self)
-        self.spinner_movie = QMovie("spinner.gif") 
+        spinner_path = os.path.join(os.path.dirname(__file__), 'spinner.gif')
+        self.spinner_movie = QMovie(spinner_path)
         self.spinner_label.setMovie(self.spinner_movie)
         self.spinner_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.spinner_label)
@@ -75,8 +75,6 @@ class AudioSwopApp(QWidget):
         self.start_button = QPushButton("Start Process")
         self.start_button.clicked.connect(self.start_process)
         layout.addWidget(self.start_button)
-        
-
 
         self.setLayout(layout)
 
@@ -100,6 +98,9 @@ class AudioSwopApp(QWidget):
             QMessageBox.critical(self, "Error", "Please select all required files and directory.")
             return
 
+        # Disable button
+        self.start_button.setEnabled(False)
+
         # Start the spinner animation
         self.spinner_label.setVisible(True)
         self.spinner_movie.start()
@@ -112,6 +113,10 @@ class AudioSwopApp(QWidget):
         # Stop the spinner animation
         self.spinner_movie.stop()
         self.spinner_label.setVisible(False)
+
+        # Enable button
+        self.start_button.setEnabled(True)
+
         QMessageBox.information(self, "Process Complete", "Audio replaced successfully!")
 
 if __name__ == '__main__':
