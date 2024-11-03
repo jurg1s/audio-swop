@@ -40,21 +40,21 @@ class AudioSwopApp(QWidget):
         self.label_instruction.setWordWrap(True)
         layout.addWidget(self.label_instruction)
 
-        self.button_video_with_audio = QPushButton("Select Video with Desired Audio 🔊")
+        self.button_video_with_audio = QPushButton("Select Video with Desired Audio ⇢")
         self.button_video_with_audio.clicked.connect(self.select_video_with_audio)
         layout.addWidget(self.button_video_with_audio)
 
         self.label_video_with_audio = QLabel("<span style='color:red;'>*</span> No file selected")
         layout.addWidget(self.label_video_with_audio)
 
-        self.button_video_other = QPushButton("Select Video to Replace Audio 🎞️")
+        self.button_video_other = QPushButton("Select Video to Replace Audio ⇠")
         self.button_video_other.clicked.connect(self.select_video_other)
         layout.addWidget(self.button_video_other)
 
         self.label_video_other = QLabel("<span style='color:red;'>*</span> No file selected")
         layout.addWidget(self.label_video_other)
 
-        self.button_output_directory = QPushButton("Select Directory to Save Output Video")
+        self.button_output_directory = QPushButton("Select Directory to Save Output Video ↓")
         self.button_output_directory.clicked.connect(self.select_output_directory)
         layout.addWidget(self.button_output_directory)
 
