@@ -1,84 +1,121 @@
 import os
-import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
-import threading
+import sys
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QFileDialog, QMessageBox
+from PyQt5.QtCore import QThread, pyqtSignal, Qt
+from PyQt5.QtGui import QMovie
 from datetime import datetime
+from PyQt5.QtWidgets import QFrame
 
+class FFMpegThread(QThread):
+    progress = pyqtSignal()
 
-def select_video_with_audio():
-    global video_with_audio_path
-    video_with_audio_path = filedialog.askopenfilename(title="Select Video with Desired Audio", filetypes=[("Video files", "*.mp4 *.avi *.mov *.mkv")])
-    if video_with_audio_path:
-        label_video_with_audio.config(text=f"Selected: {video_with_audio_path}", fg="gray")
+    def __init__(self, video_other_path, video_with_audio_path, output_directory):
+        super().__init__()
+        self.video_other_path = video_other_path
+        self.video_with_audio_path = video_with_audio_path
+        self.output_directory = output_directory
 
-def select_video_other():
-    global video_other_path
-    video_other_path = filedialog.askopenfilename(title="Select Video to Replace Audio", filetypes=[("Video files", "*.mp4 *.avi *.mov *.mkv")])
-    if video_other_path:
-        label_video_other.config(text=f"Selected: {video_other_path}", fg="gray")
-
-def select_output_directory():
-    global output_directory
-    output_directory = filedialog.askdirectory(title="Select Directory to Save Output Video")
-    if output_directory:
-        label_output_directory.config(text=f"Selected: {output_directory}", fg="gray")
-
-def run_ffmpeg_commands():
-    try:
+    def run(self):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_video_path = os.path.join(output_directory, f"output_video_{timestamp}.mp4")
-        os.system(f"ffmpeg -i '{video_other_path}' -i '{video_with_audio_path}' -c:v copy -map 0:v:0 -map 1:a:0 -shortest '{output_video_path}'")
-        messagebox.showinfo("Process Complete", "Audio replaced successfully!")
-    finally:
-        spinner.pack_forget()
+        output_video_path = os.path.join(self.output_directory, f"output_video_{timestamp}.mp4")
+        os.system(f"ffmpeg -i '{self.video_other_path}' -i '{self.video_with_audio_path}' -c:v copy -map 0:v:0 -map 1:a:0 -shortest '{output_video_path}'")
+        self.progress.emit()
 
-def start_process():
-    try:
-        if not video_with_audio_path or not video_other_path or not output_directory:
-            messagebox.showerror("Error", "Please select all required files and directory.")
+class AudioSwopApp(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.video_with_audio_path = ""
+        self.video_other_path = ""
+        self.output_directory = ""
+
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle("Audio Swop")
+        self.setGeometry(100, 100, 500, 430)
+
+        layout = QVBoxLayout()
+
+        self.label_instruction = QLabel("Select the video file with desired audio, the video to replace audio, and the directory to save the output.")
+        self.label_instruction.setWordWrap(True)
+        layout.addWidget(self.label_instruction)
+
+        self.button_video_with_audio = QPushButton("Select Video with Desired Audio 🔊")
+        self.button_video_with_audio.clicked.connect(self.select_video_with_audio)
+        layout.addWidget(self.button_video_with_audio)
+
+        self.label_video_with_audio = QLabel("<span style='color:red;'>*</span> No file selected")
+        layout.addWidget(self.label_video_with_audio)
+
+        self.button_video_other = QPushButton("Select Video to Replace Audio 🎞️")
+        self.button_video_other.clicked.connect(self.select_video_other)
+        layout.addWidget(self.button_video_other)
+
+        self.label_video_other = QLabel("<span style='color:red;'>*</span> No file selected")
+        layout.addWidget(self.label_video_other)
+
+        self.button_output_directory = QPushButton("Select Directory to Save Output Video")
+        self.button_output_directory.clicked.connect(self.select_output_directory)
+        layout.addWidget(self.button_output_directory)
+
+        self.label_output_directory = QLabel("<span style='color:red;'>*</span> No directory selected")   
+        layout.addWidget(self.label_output_directory)
+
+  
+        # Spinner setup
+        self.spinner_label = QLabel(self)
+        self.spinner_movie = QMovie("spinner.gif") 
+        self.spinner_label.setMovie(self.spinner_movie)
+        self.spinner_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.spinner_label)
+        self.spinner_label.setVisible(False)
+        
+        layout.addStretch()
+
+        self.start_button = QPushButton("Start Process")
+        self.start_button.clicked.connect(self.start_process)
+        layout.addWidget(self.start_button)
+        
+
+
+        self.setLayout(layout)
+
+    def select_video_with_audio(self):
+        self.video_with_audio_path, _ = QFileDialog.getOpenFileName(self, "Select Video with Desired Audio", "", "Video files (*.mp4 *.avi *.mov *.mkv)")
+        if self.video_with_audio_path:
+            self.label_video_with_audio.setText(f"<span style='color:gray;'>Selected: {self.video_with_audio_path}</span>")
+
+    def select_video_other(self):
+        self.video_other_path, _ = QFileDialog.getOpenFileName(self, "Select Video to Replace Audio", "", "Video files (*.mp4 *.avi *.mov *.mkv)")
+        if self.video_other_path:
+            self.label_video_other.setText(f"<span style='color:gray;'>Selected: {self.video_other_path}</span>")
+
+    def select_output_directory(self):
+        self.output_directory = QFileDialog.getExistingDirectory(self, "Select Directory to Save Output Video")
+        if self.output_directory:
+            self.label_output_directory.setText(f"<span style='color:gray;'>Selected: {self.output_directory}</span>")
+
+    def start_process(self):
+        if not self.video_with_audio_path or not self.video_other_path or not self.output_directory:
+            QMessageBox.critical(self, "Error", "Please select all required files and directory.")
             return
 
-        spinner.pack(pady=5)
-        spinner.start()
+        # Start the spinner animation
+        self.spinner_label.setVisible(True)
+        self.spinner_movie.start()
 
-        # Run the ffmpeg command in a separate thread
-        threading.Thread(target=run_ffmpeg_commands).start()
-    except NameError as e:
-        messagebox.showerror("Error", f"Variable not defined: {e}")
+        self.ffmpeg_thread = FFMpegThread(self.video_other_path, self.video_with_audio_path, self.output_directory)
+        self.ffmpeg_thread.progress.connect(self.on_process_complete)
+        self.ffmpeg_thread.start()
 
-app = tk.Tk()
-app.title("Audio Swop")
-# app.configure(bg="white")
+    def on_process_complete(self):
+        # Stop the spinner animation
+        self.spinner_movie.stop()
+        self.spinner_label.setVisible(False)
+        QMessageBox.information(self, "Process Complete", "Audio replaced successfully!")
 
-label_instruction = tk.Label(app, text="Select the video file with desired audio, the video to replace audio, and the directory to save the output 📼.", font=("Helvetica", 12), wraplength=400)
-label_instruction.pack(pady=10)
-
-# Create a frame to hold the buttons
-button_frame = tk.Frame(app, bg="whitesmoke", bd=1, relief="sunken", padx=10, pady=10)
-button_frame.pack(pady=10)
-
-button_video_with_audio = tk.Button(button_frame, text="Select Video with Desired Audio 🔊", command=select_video_with_audio)
-button_video_with_audio.pack(pady=5)
-
-label_video_with_audio = tk.Label(button_frame, text="No file selected", fg="gray", wraplength=400, bg="whitesmoke")
-label_video_with_audio.pack(pady=5)
-
-button_video_other = tk.Button(button_frame, text="Select Video to Replace Audio 🎞️", command=select_video_other)
-button_video_other.pack(pady=5)
-
-label_video_other = tk.Label(button_frame, text="No file selected", fg="gray", wraplength=400, bg="whitesmoke")
-label_video_other.pack(pady=5)
-
-button_output_directory = tk.Button(button_frame, text="Select Directory to Save Output Video 📁", command=select_output_directory)
-button_output_directory.pack(pady=5)
-
-label_output_directory = tk.Label(button_frame, text="No directory selected", fg="darkgray", wraplength=400, bg="whitesmoke")
-label_output_directory.pack(pady=5)
-
-start_button = tk.Button(button_frame, text="Start Process", command=start_process, bg="green", fg="whitesmoke", cursor="hand2")
-start_button.pack(pady=5)
-
-spinner = ttk.Progressbar(app, mode='indeterminate')
-
-app.geometry("500x430")
-app.mainloop()
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    ex = AudioSwopApp()
+    ex.show()
+    sys.exit(app.exec_())
