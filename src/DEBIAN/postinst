@@ -1,24 +1,24 @@
 #!/bin/bash
 set -e
 
-# This script runs after the package is installed.
+# Check for required dependencies
+missing_dependencies=()
 
-# Function to check if a package is installed
-is_installed() {
-    dpkg -l "$1" &> /dev/null
-}
-
-# Install required dependencies if not already installed
-if ! is_installed python3-pyqt5; then
-    echo "Installing python3-pyqt5..."
-    sudo apt-get update
-    sudo apt-get install -y python3-pyqt5
+if ! dpkg -l | grep -q python3-pyqt5; then
+    missing_dependencies+=("python3-pyqt5")
 fi
 
-if ! is_installed ffmpeg; then
-    echo "Installing ffmpeg..."
-    sudo apt-get update
-    sudo apt-get install -y ffmpeg
+if ! dpkg -l | grep -q ffmpeg; then
+    missing_dependencies+=("ffmpeg")
+fi
+
+if [ ${#missing_dependencies[@]} -ne 0 ]; then
+    echo "Error: The following dependencies are missing:"
+    for dep in "${missing_dependencies[@]}"; do
+        echo "  - $dep"
+    done
+    echo "Please install them and try again."
+    exit 1
 fi
 
 # Make sure to check if the script exists before executing it.
