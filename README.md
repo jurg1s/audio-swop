@@ -29,11 +29,21 @@ audio-swop
 ├─ releases
 │  └─ audio-swop_0.1_amd64.deb
 └─ src
-   ├─ audio_swop.desktop
-   ├─ audio_swop.py
-   ├─ icon.png
-   ├─ requirements.txt
-   ├─ setup.sh
-   └─ spinner.gif
+   ├─ DEBIAN
+   │  ├─ control
+   │  └─ postinst
+   └─ usr
+      ├─ bin
+      │  └─ audio_swop
+      └─ share
+         ├─ applications
+         │  └─ audio_swop.desktop
+         ├─ audio-swop
+         │  ├─ audio_swop.py
+         │  ├─ requirements.txt
+         │  ├─ setup.sh
+         │  └─ spinner.gif
+         └─ pixmaps
+            └─ icon.png
 
 ```

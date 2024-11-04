@@ -1,0 +1,12 @@
+#!/bin/bash
+set -e
+
+# This script runs after the package is installed.
+# Make sure to check if the script exists before executing it.
+if [ -f /usr/share/audio-swop/setup.sh ]; then
+    /usr/share/audio-swop/setup.sh
+else
+    echo "Warning: setup.sh not found, skipping."
+fi
+
+exit 0
