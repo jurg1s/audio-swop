@@ -16,8 +16,9 @@ pip3 install -r /usr/local/bin/audio_swop/requirements.txt
 sudo cp /usr/local/bin/audio_swop/audio_swop.desktop /usr/share/applications/
 sudo chmod 644 /usr/share/applications/audio_swop.desktop
 
-# Copy icon
-sudo cp /usr/local/bin/audio_swop/icon.png /usr/share/pixmaps/
+# Ensure the icon is in the correct location
+sudo cp /usr/local/bin/audio_swop/icon.png /usr/local/bin/audio_swop/
+sudo chmod 644 /usr/local/bin/audio_swop/icon.png
 
 # Copy GIF
 sudo cp /usr/local/bin/audio_swop/spinner.gif /usr/local/bin/audio_swop/

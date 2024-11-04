@@ -21,3 +21,19 @@ sudo dpkg -r audio-swop
 
 > **Status**: 🚧 Early Development  
 > **Note**: This project is currently a proof of concept and lacks many essential features. Feel free to contribute, suggest features, or use it for experimental purposes.
+
+```
+audio-swop
+├─ LICENSE
+├─ README.md
+├─ releases
+│  └─ audio-swop_0.1_amd64.deb
+└─ src
+   ├─ audio_swop.desktop
+   ├─ audio_swop.py
+   ├─ icon.png
+   ├─ requirements.txt
+   ├─ setup.sh
+   └─ spinner.gif
+
+```
