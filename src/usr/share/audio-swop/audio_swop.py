@@ -1,10 +1,10 @@
 import os
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QFileDialog, QMessageBox
-from PyQt5.QtCore import QThread, pyqtSignal, Qt
+from PyQt5.QtCore import QThread, pyqtSignal, Qt, QTimer
 from PyQt5.QtGui import QMovie
+from PyQt5.QtGui import QFontDatabase
 from datetime import datetime
-from PyQt5.QtWidgets import QFrame
 
 class FFMpegThread(QThread):
     progress = pyqtSignal()
@@ -61,24 +61,35 @@ class AudioSwopApp(QWidget):
         self.label_output_directory = QLabel("<span style='color:red;'>*</span> No directory selected")   
         layout.addWidget(self.label_output_directory)
 
-  
         # Spinner setup
         self.spinner_label = QLabel(self)
-        self.spinner_movie = QMovie("spinner.gif") 
+        spinner_path = os.path.join(os.path.dirname(__file__), 'spinner.gif')
+        self.spinner_movie = QMovie(spinner_path)
         self.spinner_label.setMovie(self.spinner_movie)
         self.spinner_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.spinner_label)
         self.spinner_label.setVisible(False)
-        
+
+        # Replacing label setup
+        self.replacing_label = QLabel("Replacing")
+        self.replacing_label.setAlignment(Qt.AlignCenter)
+        fixed_font = QFontDatabase.systemFont(QFontDatabase.FixedFont)
+        self.replacing_label.setFont(fixed_font)
+        layout.addWidget(self.replacing_label)
+        self.replacing_label.setVisible(False)
+
         layout.addStretch()
 
         self.start_button = QPushButton("Start Process")
         self.start_button.clicked.connect(self.start_process)
         layout.addWidget(self.start_button)
-        
-
 
         self.setLayout(layout)
+
+        # Timer for animating dots
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_replacing_label)
+        self.dot_count = 0
 
     def select_video_with_audio(self):
         self.video_with_audio_path, _ = QFileDialog.getOpenFileName(self, "Select Video with Desired Audio", "", "Video files (*.mp4 *.avi *.mov *.mkv)")
@@ -100,18 +111,39 @@ class AudioSwopApp(QWidget):
             QMessageBox.critical(self, "Error", "Please select all required files and directory.")
             return
 
+        # Disable button
+        self.start_button.setEnabled(False)
+
         # Start the spinner animation
         self.spinner_label.setVisible(True)
         self.spinner_movie.start()
+
+       # Start the replacing label animation
+        self.replacing_label.setVisible(True)
+        self.timer.start(100)  # Increase the speed of the animation
 
         self.ffmpeg_thread = FFMpegThread(self.video_other_path, self.video_with_audio_path, self.output_directory)
         self.ffmpeg_thread.progress.connect(self.on_process_complete)
         self.ffmpeg_thread.start()
 
+    def update_replacing_label(self):
+        self.dot_count = (self.dot_count + 1) % 4
+        dots = '.' * self.dot_count
+        self.replacing_label.setText(f"Replacing{dots:<3}")
+
     def on_process_complete(self):
         # Stop the spinner animation
         self.spinner_movie.stop()
         self.spinner_label.setVisible(False)
+
+        # Stop the replacing label animation
+        self.timer.stop()
+        self.replacing_label.setVisible(False)
+
+        # Enable button
+        # Enable button
+        self.start_button.setEnabled(True)
+
         QMessageBox.information(self, "Process Complete", "Audio replaced successfully!")
 
 if __name__ == '__main__':
