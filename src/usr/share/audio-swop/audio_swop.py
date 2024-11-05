@@ -1,6 +1,6 @@
 import os
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QFileDialog, QMessageBox
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QFileDialog, QMessageBox, QLineEdit
 from PyQt5.QtCore import QThread, pyqtSignal, Qt, QTimer
 from PyQt5.QtGui import QMovie
 from PyQt5.QtGui import QFontDatabase
@@ -9,16 +9,17 @@ from datetime import datetime
 class FFMpegThread(QThread):
     progress = pyqtSignal()
 
-    def __init__(self, video_other_path, video_with_audio_path, output_directory):
+    def __init__(self, video_other_path, video_with_audio_path, output_directory, audio_shift):
         super().__init__()
         self.video_other_path = video_other_path
         self.video_with_audio_path = video_with_audio_path
         self.output_directory = output_directory
+        self.audio_shift = audio_shift
 
     def run(self):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         output_video_path = os.path.join(self.output_directory, f"output_video_{timestamp}.mp4")
-        os.system(f"ffmpeg -i '{self.video_other_path}' -i '{self.video_with_audio_path}' -c:v copy -map 0:v:0 -map 1:a:0 -shortest '{output_video_path}'")
+        os.system(f"ffmpeg -itsoffset {self.audio_shift} -i '{self.video_other_path}' -i '{self.video_with_audio_path}' -c:v copy -map 0:v:0 -map 1:a:0 -shortest '{output_video_path}'")
         self.progress.emit()
 
 class AudioSwopApp(QWidget):
@@ -27,12 +28,13 @@ class AudioSwopApp(QWidget):
         self.video_with_audio_path = ""
         self.video_other_path = ""
         self.output_directory = ""
+        self.audio_shift = "0"
 
         self.initUI()
 
     def initUI(self):
         self.setWindowTitle("Audio Swop")
-        self.setGeometry(100, 100, 500, 430)
+        self.setGeometry(100, 100, 500, 460)
 
         layout = QVBoxLayout()
 
@@ -60,6 +62,13 @@ class AudioSwopApp(QWidget):
 
         self.label_output_directory = QLabel("<span style='color:red;'>*</span> No directory selected")   
         layout.addWidget(self.label_output_directory)
+
+        self.label_audio_shift = QLabel("Enter audio shift in seconds (positive for forward, negative for backward):")
+        layout.addWidget(self.label_audio_shift)
+
+        self.input_audio_shift = QLineEdit()
+        self.input_audio_shift.setPlaceholderText("0")
+        layout.addWidget(self.input_audio_shift)
 
         # Spinner setup
         self.spinner_label = QLabel(self)
@@ -111,6 +120,8 @@ class AudioSwopApp(QWidget):
             QMessageBox.critical(self, "Error", "Please select all required files and directory.")
             return
 
+        self.audio_shift = self.input_audio_shift.text()
+
         # Disable button
         self.start_button.setEnabled(False)
 
@@ -122,7 +133,7 @@ class AudioSwopApp(QWidget):
         self.replacing_label.setVisible(True)
         self.timer.start(100)  # Increase the speed of the animation
 
-        self.ffmpeg_thread = FFMpegThread(self.video_other_path, self.video_with_audio_path, self.output_directory)
+        self.ffmpeg_thread = FFMpegThread(self.video_other_path, self.video_with_audio_path, self.output_directory, self.audio_shift)
         self.ffmpeg_thread.progress.connect(self.on_process_complete)
         self.ffmpeg_thread.start()
 
@@ -140,7 +151,6 @@ class AudioSwopApp(QWidget):
         self.timer.stop()
         self.replacing_label.setVisible(False)
 
-        # Enable button
         # Enable button
         self.start_button.setEnabled(True)
 
